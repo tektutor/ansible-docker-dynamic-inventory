@@ -1,3 +1,8 @@
+#!/usr/bin/python
+#Author Jeganathan Swaminathan <jegan@tektutor.org> <http://www.tektutor.org>
+
+import subprocess
+import json
 from os.path import expanduser
 
 def executeDockerCommand(*args):
@@ -7,21 +12,32 @@ def docker_inspect(fmt, mcn):
     return executeDockerCommand("inspect", "-f", fmt, mcn)
 
 def docker_port(machine):
-    output = executeDockerCommand("port", machine, "22")
-    tokens = output.split(':')
-    return tokens[1]
+    try:
+       publishedPort = executeDockerCommand("port", machine, "22")
+       tokens = publishedPort.split(':')
+       return tokens[1]
+    except:
+       return "22"
 
 def get_host_vars(m):
     home = expanduser("~")
     ip = [docker_inspect("{{.NetworkSettings.IPAddress}}", m)]
+
+    publishedPort = docker_port(m)
+
     ssh_vars = {
-         "ansible_port": docker_port(m),
-         "ansible_host": "localhost",
-         "ansible_private_key_file": home+ "/.ssh/" + "id_rsa",
-         "ansible_user": "root",
-         "ansible_become_user": "root",
-         "ansible_become_password": "root"
+        "ansible_port": publishedPort,
+        "ansible_private_key_file": home+ "/.ssh/" + "id_rsa",
+        "ansible_user": "root",
+        "ansible_become_user": "root",
+        "ansible_become_password": "root",
     }
+
+    if ( publishedPort == "22" ):
+        ssh_vars.update({"ansible_host": docker_inspect("{{.NetworkSettings.IPAddress}}", m) })
+    else:
+        ssh_vars.update({"ansible_host": "localhost"})
+
     hostConnectionDetails = {"hosts": ip, "vars": ssh_vars}
     return hostConnectionDetails
 
