@@ -1,46 +1,36 @@
-#!/usr/bin/env python
-
-
-import argparse
-import subprocess
-import json
 from os.path import expanduser
 
-def dm(*args):
+def executeDockerCommand(*args):
     return subprocess.check_output(["docker"] + list(args)).strip()
 
-def dminspect(fmt, mcn):
-    return dm("inspect", "-f", fmt, mcn)
+def docker_inspect(fmt, mcn):
+    return executeDockerCommand("inspect", "-f", fmt, mcn)
 
-def dmport(machine):
-    output = dm("port", machine, "22") 
-    return output[8:]
+def docker_port(machine):
+    output = executeDockerCommand("port", machine, "22")
+    tokens = output.split(':')
+    return tokens[1]
 
-def get_host_and_vars(m):
-    home = expanduser("~") 
-    hosts = [dminspect("{{.NetworkSettings.IPAddress}}", m)]
+def get_host_vars(m):
+    home = expanduser("~")
+    ip = [docker_inspect("{{.NetworkSettings.IPAddress}}", m)]
     ssh_vars = {
-         "ansible_ssh_port": dmport(m),
-         "ansible_ssh_host": "localhost",
-         "ansible_ssh_private_key_file": home+ "/.ssh/" + "id_rsa",
-         "ansible_ssh_user": "root",
-         "ansible_ssh_password": "root",
+         "ansible_port": docker_port(m),
+         "ansible_host": "localhost",
+         "ansible_private_key_file": home+ "/.ssh/" + "id_rsa",
+         "ansible_user": "root",
          "ansible_become_user": "root",
          "ansible_become_password": "root"
     }
-    data = {"hosts": hosts, "vars": ssh_vars}
-    return data
+    hostConnectionDetails = {"hosts": ip, "vars": ssh_vars}
+    return hostConnectionDetails
 
-class DockerMachineInventory(object):
+class DockerMachineInventory():
       def __init__(self):
           self.inventory = {} # Ansible Inventory
 
-          parser = argparse.ArgumentParser(description='Produce an Ansible Inventory file based on Docker Machine status')
-          parser.add_argument('--list', action='store_true', help='List all active Droplets as Ansible inventory (default: True)')
-          self.args = parser.parse_args()
-
-          machines = dm("ps", "-q").splitlines()
-          json_data = {m: get_host_and_vars(m) for m in machines}
+          machines = executeDockerCommand("ps", "-q").splitlines()
+          json_data = {m: get_host_vars(m) for m in machines}
 
           print json.dumps(json_data)
 
