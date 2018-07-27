@@ -25,7 +25,7 @@ def get_host_vars(m):
     hostConnectionDetails = {"hosts": ip, "vars": ssh_vars}
     return hostConnectionDetails
 
-class DockerMachineInventory():
+class DockerInventory():
       def __init__(self):
           self.inventory = {} # Ansible Inventory
 
@@ -34,4 +34,4 @@ class DockerMachineInventory():
 
           print json.dumps(json_data)
 
-DockerMachineInventory()
+DockerInventory()
