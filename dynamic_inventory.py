@@ -48,6 +48,6 @@ class DockerInventory():
           machines = executeDockerCommand("ps", "-q").splitlines()
           json_data = {m: get_host_vars(m) for m in machines}
 
-          print json.dumps(json_data)
+          print json.dumps(json_data,indent=4,sort_keys=True)
 
 DockerInventory()
