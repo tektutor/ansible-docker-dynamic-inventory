@@ -8,5 +8,5 @@ ansible -i ./dynamic_inventory all -m ping
 As we have ansible.cfg as part of this project folder, it already takes care of pointing the dynamic_inventory.py 
 to be used as inventory in the place of a static inventory, hence you can execute ansible commands as below
 
-ansible all -m ping
+ansible all -m ping<br>
 ansible-playbook ping.yml
