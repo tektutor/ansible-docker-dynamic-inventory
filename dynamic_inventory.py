@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 #Author Jeganathan Swaminathan <jegan@tektutor.org> <http://www.tektutor.org>
 
 import subprocess
@@ -9,12 +9,14 @@ def executeDockerCommand(*args):
     return subprocess.check_output(["docker"] + list(args)).strip()
 
 def docker_inspect(fmt, mcn):
-    return executeDockerCommand("inspect", "-f", fmt, mcn)
+    published_host = executeDockerCommand("inspect", "-f", fmt, mcn).split()
+    return published_host[0].decode('utf-8')
 
 def docker_port(machine):
     try:
-       publishedPort = executeDockerCommand("port", machine, "22")
-       tokens = publishedPort.split(':')
+       published_port = executeDockerCommand("port", machine, "22").split()
+       published_port = published_port[0].decode('utf-8')
+       tokens = published_port.split(':')
        return tokens[1]
     except:
        return "22"
@@ -44,10 +46,8 @@ def get_host_vars(m):
 class DockerInventory():
       def __init__(self):
           self.inventory = {} # Ansible Inventory
-
           machines = executeDockerCommand("ps", "-q").splitlines()
-          json_data = {m: get_host_vars(m) for m in machines}
-
-          print json.dumps(json_data,indent=4,sort_keys=True)
-
+          json_data = {m.decode("utf-8"): get_host_vars(m.decode("utf-8")) for m in machines}
+          print ( json.dumps(json_data,indent=4,sort_keys=True) )
+            
 DockerInventory()
